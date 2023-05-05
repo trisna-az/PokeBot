@@ -1,0 +1,274 @@
+flows:
+    fallback:
+        active: true
+        volatile: false
+        fallback: true
+        intents:
+            fallbackIntent:
+                type: text
+                initial: false
+                fallback: true
+        states:
+            init:
+                transitions:
+                    init:
+                        fallback: true
+                action: fallbackMessageAction
+                initial: true
+                end: true
+        actions:
+            fallbackAction:
+                type: text
+                options:
+                    text: 'Sorry, I do not understand'
+            fallbackMessageAction:
+                type: text
+                options:
+                    text: 'Sorry, I do not understand'
+        methods: {}
+    welcome:
+        active: true
+        volatile: true
+        intents:
+            openingIntent:
+                type: text
+                initial: true
+                fallback: false
+                condition: 'content=="/start"'
+            askNameIntent:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: nameList
+                    match: name
+            yes:
+                type: text
+                initial: false
+                fallback: false
+                classifier:
+                    nlu: yesno
+                    match: yes
+        states:
+            init:
+                transitions:
+                    askName:
+                        condition: 'intent=="openingIntent"'
+                initial: true
+            askName:
+                transitions:
+                    stateName:
+                        condition: 'intent=="askNameIntent"'
+                        mapping:
+                            context.name: content
+                action: askNameAction
+                end: false
+            stateName:
+                transitions:
+                    confirmation:
+                        condition: 'intent=="yes"'
+                action: stateNameAction
+            confirmation:
+                transitions: {}
+                action: confirmationAction
+                end: true
+        actions:
+            askNameAction:
+                type: text
+                options:
+                    text: 'Hello what is your name?'
+            stateNameAction:
+                type: text
+                options:
+                    text: 'So your name is $(context.name) ?'
+            confirmationAction:
+                type: text
+                options:
+                    text: 'Welcome to PokeBot, $(context.name)! You can send "Pokemon Information" to get information about a Pokemon'
+        methods: {}
+    pokeInfo:
+        active: true
+        volatile: false
+        intents:
+            askPokeInfoIntent:
+                type: text
+                initial: true
+                fallback: false
+                condition: 'content == "Pokemon Information"'
+            pokeNameIntent:
+                type: text
+                initial: true
+                fallback: false
+                classifier:
+                    nlu: pokeName
+                    match: nameId
+        states:
+            init:
+                transitions:
+                    askPokeInfo:
+                        condition: 'intent == "askPokeInfoIntent"'
+                initial: true
+            askPokeInfo:
+                transitions:
+                    pokemonInformation:
+                        fallback: true
+                        mapping:
+                            context.name: content
+                action: askPokeInfoAction
+            pokemonInformation:
+                transitions: {}
+                action:
+                    -
+                        name: getPokeAPI
+                    -
+                        name: actionPokemonData
+                    -
+                        name: actionPokemonPic
+                end: true
+        actions:
+            askPokeInfoAction:
+                type: text
+                options:
+                    text: 'Which Pokemon do you need the info for?'
+            actionPokemonData:
+                type: text
+                options:
+                    text: '$(context.name) is an <$(result.types.0.type.name)> type Pokemon with $(result.weight) weight and $(result.height) height, here is a picture of $(context.name) :'
+            getPokeAPI:
+                type: api
+                options:
+                    uri: 'https://pokeapi.co/api/v2/pokemon/$(context.name)/'
+                    method: GET
+                    isAsync: false
+            actionPokemonPic:
+                type: template
+                options:
+                    type: image
+                    items:
+                        originalContentUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$(result.id).png'
+                        previewImageUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$(result.id).png'
+        methods: {}
+nlus:
+    pokeName:
+        type: keyword
+        options:
+            keywords:
+                nameId:
+                    - '1'
+                    - '2'
+                    - '3'
+                    - '4'
+                    - '5'
+                    - '6'
+                    - '7'
+                    - '8'
+                    - '9'
+                    - '10'
+                    - '11'
+                    - '12'
+                    - '13'
+                    - '14'
+                    - '15'
+                    - '16'
+                    - '17'
+                    - '18'
+                    - '19'
+                    - '20'
+                    - '21'
+                    - '22'
+                    - '23'
+                    - '24'
+                    - '25'
+                    - '26'
+                    - '27'
+                    - '28'
+                    - '29'
+                    - '30'
+                    - bulbasaur
+                    - Bulbasaur
+                    - ivysaur
+                    - Ivysaur
+                    - venusaur
+                    - Venusaur
+                    - charmander
+                    - Charmander
+                    - charmeleon
+                    - Charmeleon
+                    - charizard
+                    - Charizard
+                    - squirtle
+                    - Squirtle
+                    - wartortle
+                    - Wartortle
+                    - blastoise
+                    - Blastoise
+                    - caterpie
+                    - Caterpie
+                    - metapod
+                    - Metapod
+                    - butterfree
+                    - Butterfree
+                    - weedle
+                    - Weedle
+                    - kakuna
+                    - Kakuna
+                    - beedrill
+                    - Beedrill
+                    - pidgey
+                    - Pidgey
+                    - pidgeotto
+                    - Pidgeotto
+                    - pidgeot
+                    - Pidgeot
+                    - rattata
+                    - Rattata
+                    - raticate
+                    - Raticate
+                    - spearow
+                    - Spearow
+                    - fearow
+                    - Fearow
+                    - ekans
+                    - Ekans
+                    - arbok
+                    - Arbok
+                    - pikachu
+                    - Pikachu
+                    - raichu
+                    - Raichu
+                    - sandshrew
+                    - Sandshrew
+                    - sandslash
+                    - Sandslash
+                    - nidoran-f
+                    - Nidoran-f
+                    - nidorina
+                    - Nidorina
+    nameList:
+        type: keyword
+        options:
+            keywords:
+                name:
+                    - trisna
+                    - abdul
+                    - zabar
+                    - budi
+                    - ani
+                    - adi
+                    - susi
+                    - susan
+                    - asep
+                    - alan
+        process: []
+    yesno:
+        type: keyword
+        options:
+            keywords:
+                yes:
+                    - Yes
+                    - yes
+                    - ya
+                    - iya
+                    - betul
+methods: {}
+config: {}
